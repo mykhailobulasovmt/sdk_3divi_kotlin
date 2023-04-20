@@ -1,0 +1,100 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.example.sdk_3divi_kotlin'
+    compileSdk 33
+
+    defaultConfig {
+        applicationId "com.example.sdk_3divi_kotlin"
+        minSdk 21
+        targetSdk 33
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ["../../lib/jniLibs"]
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    //Insert unique string into asest to avoid copy assets to data folder every time on load app.
+//Checking this unique string in UnpackAssetsActivity
+    task computeAssetsHash() {
+        doLast {
+            mkdir("$projectDir/src/main/assets/")
+            new File(  "$projectDir/src/main/assets/", "assets-hash.txt").text =
+                    """Buildtime: ${new Date().format("YYYY:MM:dd:HH:mm:ss", TimeZone.getTimeZone("GMT"))}"""
+        }
+    }
+
+    task copyFiles(type: Copy) {
+        description = 'Copy files'
+        from("$projectDir/../../lib/.."){
+            include (
+                    "conf/**",
+                    "share/facedetectors/blf/**",
+                    "share/fda/**",
+                    "share/mesh/**",
+                    "share/quality/**",
+                    "share/quality_iso/**",
+                    "share/face_quality/**",
+                    "share/faceanalysis/**",
+                    "share/age_second/**",
+                    "share/liveness_2d_v2/**",
+                    "share/faceattributes/**",
+                    "share/iris/**",
+                    "license/**"
+            )
+        }
+        into "$projectDir/src/main/assets/"
+    }
+
+    preBuild.dependsOn computeAssetsHash, copyFiles
+}
+String storageUrl = System.env.FLUTTER_STORAGE_BASE_URL ?: "https://storage.googleapis.com"
+repositories {
+    mavenCentral()
+    google()
+    //TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
+//    maven {
+//        url 'C:/Users/User/AndroidStudioProjects/kotlin_example_divi/3divi_service_apk/isl_sdk/build/host/outputs/repo'
+//    }
+    maven {
+        url "$storageUrl/download.flutter.io"
+    }
+}
+
+dependencies {
+
+    implementation files('../../lib/jniLibs/facerec.jar')
+
+    implementation 'androidx.core:core-ktx:1.7.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.8.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    //TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
+//    debugImplementation 'com.example.isl_sdk:flutter_debug:1.0'
+//    profileImplementation 'com.example.isl_sdk:flutter_profile:1.0'
+//    releaseImplementation 'com.example.isl_sdk:flutter_release:1.0'
+}
