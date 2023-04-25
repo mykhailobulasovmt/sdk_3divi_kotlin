@@ -4,9 +4,9 @@ buildscript {
     repositories {
         mavenCentral()
         //TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
-//        maven {
-//            url 'C:/Users/User/AndroidStudioProjects/kotlin_example_divi/3divi_service_apk/isl_sdk/build/host/outputs/repo'
-//        }
+        maven {
+            url 'C:/Users/User/Desktop/get_version_kotlin_git/isl_sdk/build/host/outputs/repo'
+        }
         maven {
             url "$storageUrl/download.flutter.io"
         }

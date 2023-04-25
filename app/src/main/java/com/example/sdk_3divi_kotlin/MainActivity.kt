@@ -1,35 +1,39 @@
 package com.example.sdk_3divi_kotlin
 
-import android.os.Bundle
-import android.widget.Button
+//TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
 import android.content.SharedPreferences
 import android.content.res.AssetManager
+import android.os.Bundle
+import android.os.Process
 import android.util.Log
+import android.widget.Button
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import com.vdt.face_recognition.sdk.FacerecService
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.embedding.engine.FlutterEngineCache
+import io.flutter.embedding.engine.dart.DartExecutor
+import io.flutter.plugin.common.MethodChannel
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileOutputStream
 import java.io.InputStreamReader
 import java.util.*
-//TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
-//import io.flutter.embedding.android.FlutterActivity
-//import io.flutter.embedding.engine.FlutterEngine
-//import io.flutter.embedding.engine.FlutterEngineCache
-//import io.flutter.embedding.engine.dart.DartExecutor
-//import io.flutter.plugin.common.MethodChannel
 
 const val FLUTTER_ENGINE_ID = "flutter_engine"
 
 class MainActivity : AppCompatActivity() {
 
     //TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
-//    private val CHANNEL = "com.flutterKotlin/result"
-//    lateinit var methodChannel: MethodChannel
-//    private lateinit var flutterEngine: FlutterEngine
+    private val CHANNEL = "com.flutterKotlin/result"
+    lateinit var methodChannel: MethodChannel
+    private lateinit var flutterEngine: FlutterEngine
 
 
     var TAG = "TEST_SDK"
+    var score = 0.0
+    var capturedIdDocument: ByteArray? = null
+    var alivenessCheckImage: ByteArray? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -37,27 +41,83 @@ class MainActivity : AppCompatActivity() {
         val libDir: String = applicationInfo.nativeLibraryDir
 
         extractAssets()
-        val service = FacerecService.createService(
-            applicationInfo.nativeLibraryDir + "/libfacerec.so",
-            applicationInfo.dataDir + "/fsdk/conf/facerec",
-            applicationInfo.dataDir + "/fsdk/license"
-        )
-        Log.d(TAG, "version = ${service.version}")
+
+        Log.d(TAG, "native lib dir: " + applicationInfo.nativeLibraryDir + "/libfacerec.so")
+
+
+
+        flutterEngine = FlutterEngine(this)
+        flutterEngine.dartExecutor.executeDartEntrypoint(DartExecutor.DartEntrypoint.createDefault())
+        FlutterEngineCache.getInstance().put(FLUTTER_ENGINE_ID, flutterEngine)
+        val accessKey = "<yourAccessKey>"
+        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
+        methodChannel.invokeMethod("initiateSdk", mapOf("accessKey" to accessKey, "libDir" to libDir, "dataDir" to dataDir))//pass the "accessKey" argument
+        methodChannel.setMethodCallHandler { call, result ->
+            //Handle result from sdk
+            when (call.method) {
+                "onCaptureIdDocumentResult" -> { //Handle result from capture method
+                    var documentFields = call.argument<Map<String, String>>("documentFields")
+                    capturedIdDocument = call.argument<ByteArray>("capturedIdDocument")
+                    println("------documentFields = $documentFields")
+                    println("------capturedIdDocument = $capturedIdDocument")
+                }
+                "onAlivenessCheckResult" -> { //Handle result from aliveness method
+                    var alive = call.argument<Boolean>("alive")
+                    alivenessCheckImage = call.argument<ByteArray>("alivenessCheckImage")
+                    println("------alive = $alive")
+                    println("------alivenessCheckImage = $alivenessCheckImage")
+                }
+                "onFacialMatchingResult" -> { //Handle result from facialMatching method
+                    score = call.argument<Double>("score")!!
+                    println("------score = $score")
+                }
+                else -> {
+                    result.notImplemented() //Handle other methods or unknown methods
+                }
+            }
+        }
 
         //TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
-//        val button: Button = findViewById(R.id.fab1)
-//        button.setOnClickListener {
-//            val documentType = 1
-//            launchFlutterActivity("captureIdDocument", mapOf("documentType" to documentType))
-//        }
-//        flutterEngine = FlutterEngine(this)
-//        flutterEngine.dartExecutor.executeDartEntrypoint(DartExecutor.DartEntrypoint.createDefault())
-//        FlutterEngineCache.getInstance().put(FLUTTER_ENGINE_ID, flutterEngine)
-//        val accessKey = "<yourAccessKey>"
-//        methodChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
-//        methodChannel.invokeMethod("initiateSdk", mapOf("accessKey" to accessKey, "libDir" to libDir, "dataDir" to dataDir))//pass the "accessKey" argument
 
+        val text: TextView = findViewById(R.id.score)
+        text.text = score.toString()
 
+        //Call the "capture" method in Flutter and pass the "documentType" argument
+        val buttonCapture: Button = findViewById(R.id.fab1)
+        buttonCapture.setOnClickListener {
+            val documentType = 1
+            launchFlutterActivity("captureIdDocument", mapOf("documentType" to documentType))
+        }
+
+        //Call the "alivenessCheck" method in Flutter and pass the "Params"
+        val buttonAlivenessAndFaceMatch: Button = findViewById(R.id.fab2)
+        buttonAlivenessAndFaceMatch.setOnClickListener {
+//            var capturedIdDocumentImage = ByteArray
+            launchFlutterActivity(
+                "alivenessAndFaceMatch",
+                mapOf(
+                    "doFaceMatch" to true,
+                    "capturedIdDocumentImage" to capturedIdDocument
+                )
+            )
+        }
+        //Call the "alivenessCheck" method in Flutter
+        val alivenessCheck: Button = findViewById(R.id.fab3)
+        alivenessCheck.setOnClickListener {
+            launchFlutterActivity("alivenessCheck", mapOf("" to ""))
+        }
+
+        //Call the "facialMatching" method in Flutter and pass the "facialMatchingParams" argument
+        val facialMatching: Button = findViewById(R.id.fab4)
+        facialMatching.setOnClickListener {
+            launchFlutterActivity(
+                "facialMatching",
+                mapOf(
+                    "alivenessCheckImage" to alivenessCheckImage,
+                    "capturedIdDocumentImage" to capturedIdDocument,
+                )
+            )
+        }
     }
 
     private fun extractAssets() {
@@ -121,11 +181,11 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-//    private fun launchFlutterActivity(methodName: String, methodArg: Any?) {
-//        val intent = FlutterActivity
-//            .withCachedEngine(FLUTTER_ENGINE_ID)
-//            .build(this)
-//        methodChannel.invokeMethod(methodName, methodArg)
-//        startActivity(intent)
-//    }
+    private fun launchFlutterActivity(methodName: String, methodArg: Any?) {
+        val intent = FlutterActivity
+            .withCachedEngine(FLUTTER_ENGINE_ID)
+            .build(this)
+        methodChannel.invokeMethod(methodName, methodArg)
+        startActivity(intent)
+    }
 }

@@ -23,9 +23,25 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
+/*
     sourceSets {
         main {
-            jniLibs.srcDirs = ["../../lib/jniLibs"]
+            jniLibs {
+                srcDirs('src/main/jni')
+//            jni {
+//                srcDirs 'src/main/jni'
+            }
+//            assets {
+//                srcDirs 'src/main/assets'
+//            }
+        }
+    }
+*/
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ["src/main/jni"]
         }
     }
     compileOptions {
@@ -37,7 +53,7 @@ android {
     }
     //Insert unique string into asest to avoid copy assets to data folder every time on load app.
 //Checking this unique string in UnpackAssetsActivity
-    task computeAssetsHash() {
+/*    task computeAssetsHash() {
         doLast {
             mkdir("$projectDir/src/main/assets/")
             new File(  "$projectDir/src/main/assets/", "assets-hash.txt").text =
@@ -67,16 +83,16 @@ android {
         into "$projectDir/src/main/assets/"
     }
 
-    preBuild.dependsOn computeAssetsHash, copyFiles
+    preBuild.dependsOn computeAssetsHash, copyFiles*/
 }
 String storageUrl = System.env.FLUTTER_STORAGE_BASE_URL ?: "https://storage.googleapis.com"
 repositories {
     mavenCentral()
     google()
     //TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
-//    maven {
-//        url 'C:/Users/User/AndroidStudioProjects/kotlin_example_divi/3divi_service_apk/isl_sdk/build/host/outputs/repo'
-//    }
+    maven {
+        url 'C:/Users/User/Desktop/get_version_kotlin_git/isl_sdk/build/host/outputs/repo'
+    }
     maven {
         url "$storageUrl/download.flutter.io"
     }
@@ -84,7 +100,8 @@ repositories {
 
 dependencies {
 
-    implementation files('../../lib/jniLibs/facerec.jar')
+    // ## 3Divi jar
+    implementation fileTree(dir: 'libs', include: 'facerec.jar')
 
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
@@ -94,7 +111,6 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     //TODO: after the service starts working, comment on these lines and put what you downloaded from our SVN next to this project
-//    debugImplementation 'com.example.isl_sdk:flutter_debug:1.0'
-//    profileImplementation 'com.example.isl_sdk:flutter_profile:1.0'
-//    releaseImplementation 'com.example.isl_sdk:flutter_release:1.0'
+    debugImplementation 'com.example.isl_sdk:flutter_debug:1.0'
+    releaseImplementation 'com.example.isl_sdk:flutter_release:1.0'
 }

@@ -36,5 +36,15 @@
       <option name="name" value="maven" />
       <option name="url" value="file:/$PROJECT_DIR$/../isl_sdk/build/host/outputs/repo" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven" />
+      <option name="name" value="maven" />
+      <option name="url" value="file:/$USER_HOME$/AndroidStudioProjects/kotlin_example_divi/3divi_service_apk/isl_sdk/build/host/outputs/repo" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven" />
+      <option name="name" value="maven" />
+      <option name="url" value="file:/$PROJECT_DIR$/../../working_flutter/isl_sdk/build/host/outputs/repo/" />
+    </remote-repository>
   </component>
 </project>
